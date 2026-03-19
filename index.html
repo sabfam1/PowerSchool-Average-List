@@ -1,0 +1,187 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Class Averages</title>
+
+<style>
+body{
+  margin:0;
+  background:#000;
+  color:#fff;
+  font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto;
+  display:flex;
+  justify-content:center;
+  padding:20px;
+}
+
+.card{
+  width:100%;
+  max-width:420px;
+  background:#111;
+  padding:18px;
+  border-radius:16px;
+}
+
+h1{
+  text-align:center;
+  color:#0a84ff;
+  margin-top:0;
+}
+
+button{
+  width:100%;
+  padding:14px;
+  margin-top:10px;
+  border:none;
+  border-radius:12px;
+  background:#0a84ff;
+  color:#fff;
+  font-size:16px;
+  font-weight:600;
+  cursor:pointer;
+}
+
+#clearBtn{
+  background:#ff3b30;
+}
+
+#results{
+  margin-top:16px;
+  font-size:15px;
+  color:#ccc;
+}
+
+.class{
+  background:#1a1c1f;
+  padding:12px;
+  border-radius:12px;
+  margin-bottom:10px;
+}
+</style>
+</head>
+
+<body>
+<div class="card">
+  <h1>📊 Class Averages</h1>
+
+  <button id="importBtn">Add Classes</button>
+  <button id="clearBtn">Clear All</button>
+
+  <input id="filePicker" type="file" accept=".json" multiple style="display:none">
+
+  <div id="results"></div>
+</div>
+
+<script>
+const importBtn = document.getElementById('importBtn');
+const clearBtn = document.getElementById('clearBtn');
+const filePicker = document.getElementById('filePicker');
+const results = document.getElementById('results');
+
+// STORE ALL LOADED CLASSES HERE
+let allClasses = [];
+
+importBtn.onclick = () => filePicker.click();
+
+// ADD FILES (DO NOT RESET)
+filePicker.onchange = (e)=>{
+  const files = Array.from(e.target.files);
+
+  files.forEach(file=>{
+    const reader = new FileReader();
+
+    reader.onload = ev=>{
+      try{
+        const data = JSON.parse(ev.target.result);
+
+        const weights = data.weights || {
+          Test:60, Quiz:20, Classwork:10, Homework:10
+        };
+
+        const totals = {
+          Test:{e:0,p:0},
+          Quiz:{e:0,p:0},
+          Classwork:{e:0,p:0},
+          Homework:{e:0,p:0}
+        };
+
+        (data.assignments || []).forEach(a=>{
+          const cat = a.category || "Classwork";
+          const e = Number(a.score)||0;
+          const p = Number(a.pts)||0;
+
+          totals[cat].e += e;
+          totals[cat].p += p;
+        });
+
+        let weighted = 0;
+        let active = 0;
+
+        ["Test","Quiz","Classwork","Homework"].forEach(cat=>{
+          const t = totals[cat];
+          if(t.p > 0){
+            const avg = (t.e / t.p) * 100;
+            const w = (weights[cat] || 0) / 100;
+
+            weighted += avg * w;
+            active += w;
+          }
+        });
+
+        const final = active > 0 ? (weighted / active) : 0;
+
+        allClasses.push({
+          name: data.name || file.name,
+          grade: final.toFixed(2)
+        });
+
+        render();
+
+      }catch(err){
+        allClasses.push({
+          name: file.name,
+          grade: "Error"
+        });
+        render();
+      }
+    };
+
+    reader.readAsText(file);
+  });
+
+  // reset input so same file can be re-added later if needed
+  e.target.value = '';
+};
+
+// CLEAR BUTTON
+clearBtn.onclick = ()=>{
+  if(!confirm("Clear all imported classes?")) return;
+  allClasses = [];
+  render();
+};
+
+// RENDER LIST
+function render(){
+  results.innerHTML = "";
+
+  if(allClasses.length === 0){
+    results.innerHTML = "No classes loaded";
+    return;
+  }
+
+  allClasses.forEach(c=>{
+    const div = document.createElement("div");
+    div.className = "class";
+    div.innerHTML = `
+      <strong>${c.name}</strong><br>
+      Average: ${c.grade}%
+    `;
+    results.appendChild(div);
+  });
+}
+</script>
+
+</body>
+</html>
