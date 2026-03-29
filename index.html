@@ -80,12 +80,10 @@ const clearBtn = document.getElementById('clearBtn');
 const filePicker = document.getElementById('filePicker');
 const results = document.getElementById('results');
 
-// STORE ALL LOADED CLASSES HERE
 let allClasses = [];
 
 importBtn.onclick = () => filePicker.click();
 
-// ADD FILES (DO NOT RESET)
 filePicker.onchange = (e)=>{
   const files = Array.from(e.target.files);
 
@@ -107,10 +105,16 @@ filePicker.onchange = (e)=>{
           Homework:{e:0,p:0}
         };
 
+        // ✅ Only include assignments with BOTH score and pts
         (data.assignments || []).forEach(a=>{
           const cat = a.category || "Classwork";
-          const e = Number(a.score)||0;
-          const p = Number(a.pts)||0;
+
+          // Skip blank or missing values
+          if(a.score === '' || a.score === undefined) return;
+          if(a.pts === '' || a.pts === undefined || Number(a.pts) === 0) return;
+
+          const e = Number(a.score);
+          const p = Number(a.pts);
 
           totals[cat].e += e;
           totals[cat].p += p;
@@ -151,18 +155,15 @@ filePicker.onchange = (e)=>{
     reader.readAsText(file);
   });
 
-  // reset input so same file can be re-added later if needed
   e.target.value = '';
 };
 
-// CLEAR BUTTON
 clearBtn.onclick = ()=>{
   if(!confirm("Clear all imported classes?")) return;
   allClasses = [];
   render();
 };
 
-// RENDER LIST
 function render(){
   results.innerHTML = "";
 
