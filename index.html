@@ -105,16 +105,21 @@ filePicker.onchange = (e)=>{
           Homework:{e:0,p:0}
         };
 
-        // ✅ Only include assignments with BOTH score and pts
+        // ✅ Only include assignments with BOTH valid score and pts
         (data.assignments || []).forEach(a=>{
           const cat = a.category || "Classwork";
 
-          // Skip blank or missing values
-          if(a.score === '' || a.score === undefined) return;
-          if(a.pts === '' || a.pts === undefined || Number(a.pts) === 0) return;
+          const score = a.score;
+          const pts = a.pts;
 
-          const e = Number(a.score);
-          const p = Number(a.pts);
+          // Skip blank, null, undefined, or non-numeric
+          if(score === '' || score === null || score === undefined) return;
+          if(pts === '' || pts === null || pts === undefined) return;
+
+          const e = Number(score);
+          const p = Number(pts);
+
+          if(isNaN(e) || isNaN(p) || p === 0) return;
 
           totals[cat].e += e;
           totals[cat].p += p;
